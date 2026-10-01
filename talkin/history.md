@@ -260,3 +260,33 @@ Verified past `nix flake check`, since that only evaluates the module and never
 serializes the TOML. Built the blob toplevel and grepped the resulting
 `keymap.toml` out of the store, all three entries are there with correct `on`,
 `run` and `desc`.
+
+## rclone
+
+Started the remote setup. `rclone config` is interactive and needs the
+user's own credentials, so the agent cannot run it, only prepare the exact
+answers for each prompt.
+
+Before writing anything, checked the rclone 1.75 backend list. Both providers
+have native backends, `yandex` and `mailru`, both Tier 1, and the plan in
+`context.md` up to that point was generic WebDAV for both. That would have
+been a downgrade: WebDAV reports neither hashes nor modification times, so
+`rclone copy mailru: yandex:` would have had no way to tell what already
+transferred and would re-upload everything on any re-run. Native gives Yandex
+MD5 and Mail.ru a modified SHA1, plus mtimes at 1 ns and 1 s.
+
+Also worth noting for the record: Yandex authenticates by OAuth through a
+temporary local webserver on `127.0.0.1:53682`, so no app password is needed
+there at all. Mail.ru does need an app password, and the level has to be
+"Full access to Mail, Cloud and Calendar", the Cloud-only level fails with
+`oauth2: server response missing access_token` per the forum thread in the
+docs.
+
+The 2 GB single-file cap in the Mail.ru docs is a free-tier limit and does
+not apply, the user has 1 TB plans on both sides. The actual reason for the
+migration is that the Mail.ru subscription expires soon, roughly 600 GB moves
+one way from Mail.ru to Yandex.
+
+Nothing about GVFS changes. gvfs speaks WebDAV regardless of which backend
+rclone uses, so `davs://webdav.yandex.ru/` and `davs://cloud.mail.ru/` stay
+valid for yazi. Kept those two concerns separate in the notes.

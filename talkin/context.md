@@ -100,9 +100,25 @@ Verified with `lsblk`, `lscpu`, `lspci`, `df`.
   output does
 - `pkgs.gvfs` already contains `gvfsd-dav`. There is no `gvfs-backends`
   package in current nixpkgs
-- WebDAV endpoints:
+- rclone uses the native `mailru` and `yandex` backends, not generic WebDAV.
+  Both are Tier 1 and both give native hashes, Yandex MD5 and Mail.ru a
+  modified SHA1, plus modtimes. WebDAV gives neither, so a re-run of
+  `rclone copy` could not tell what already transferred and would re-upload
+  everything. Decided after reading the rclone 1.75 backend docs
+- Yandex auth is OAuth through a local webserver on `127.0.0.1:53682`, so no
+  app password. Mail.ru needs an app password with the level "Full access to
+  Mail, Cloud and Calendar". Cloud alone fails with `missing access_token`
+- Both accounts are on 1 TB paid plans, so the 2 GB single-file limit of the
+  free Mail.ru tier does not apply here
+- The goal is a one-way migration of roughly 600 GB from Mail.ru to Yandex
+  because the Mail.ru subscription expires soon
+- Mail.ru storage is case insensitive, so `Hello.doc` and `hello.doc` cannot
+  coexist there. Yandex allows both, so this only matters while reading the
+  source
+- GVFS in yazi is unaffected by the rclone backend choice, `davs://...` is the
+  WebDAV protocol either way:
   - Mail.ru `https://webdav.cloud.mail.ru`
-  - Yandex `https://webdav.yandex.ru`, GVFS mounts it as `davs://...`
+  - Yandex `https://webdav.yandex.ru`
 - Credentials stay out of Nix. The user runs `rclone config` and keeps the
   file out of the repo
 - Disk switching in yazi is by keymap, not a plugin. `g m` to `/mnt` as the hub
