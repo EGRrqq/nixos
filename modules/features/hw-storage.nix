@@ -20,9 +20,10 @@
     };
 
     # The root of a fresh btrfs belongs to root, the user has to own it to put
-    # anything there without sudo
+    # anything there without sudo. There is no group named egr, the primary
+    # group is users
     systemd.tmpfiles.rules = [
-      "d /mnt/data 0755 egr egr - -"
+      "d /mnt/data 0755 egr users - -"
     ];
 
     # Keep the newest snapshots and drop the rest, otherwise they pile up and
