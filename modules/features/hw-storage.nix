@@ -49,13 +49,21 @@
 
         btrfs subvolume snapshot -r /mnt/data /mnt/data/.snapshots/$(date -I)
 
-        btrfs subvolume list -o /mnt/data/.snapshots \
-          | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}' \
-          | sort -r \
-          | tail -n +13 \
-          | while read -r old; do
-              btrfs subvolume delete "/mnt/data/.snapshots/$old"
-            done
+        # Every snapshot subvolume is a plain directory, so the names come from a
+        # normal listing. btrfs subvolume list walks the tree with an ioctl that
+        # is refused for a normal user here, and in a pipeline its failure would
+        # be invisible anyway, which would leave the pruning quietly doing
+        # nothing. Assigning the listing on its own makes a failure stop the
+        # service instead.
+        names=$(ls -1 /mnt/data/.snapshots)
+
+        stale=$(printf '%s\n' "$names" | sort -r | tail -n +13)
+
+        if [ -n "$stale" ]; then
+          printf '%s\n' "$stale" | while read -r name; do
+            [ -n "$name" ] && btrfs subvolume delete "/mnt/data/.snapshots/$name"
+          done
+        fi
       '';
       serviceConfig = {
         Type = "oneshot";
