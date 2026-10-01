@@ -16,16 +16,27 @@ Ordered by what blocks what.
 - [x] `hw-storage.nix` with btrfs `/mnt/data` and monthly snapshots, `152a4b7`
 - [x] All of the above pushed to GitHub
 
-## Next, needs the user
+## Rebuild
 
-1. Rebuild and switch. Everything else about the system waits on this:
-   ```
-   cd ~/.config/nixos && sudo nixos-rebuild switch --flake .#blob
-   ```
-   After it, log out and back in so the `disk` group applies.
+Done, the user ran it and it applied cleanly. Verified afterwards:
 
-## After the rebuild
+- `/run/current-system` is generation `id4m03pr...`, matching what the agent
+  built before the switch
+- `gnome-disks`, `smartctl`, `aseqdump`, `rclone`, `gio`, `virsh`,
+  `virt-manager` all resolve now
+- `/etc/fstab` has `/dev/disk/by-label/data /mnt/data btrfs
+  compress=zstd,noatime,nofail 0 0`, and `mnt-data.mount` is generated
+- `storage-snapshot.timer` is scheduled, next run 2026-11-01 04:00
+- `libvirtd.socket` is active, `virsh --connect qemu:///system` answers with an
+  empty domain list, so libvirt is usable
 
+Still open: the `disk`, `libvirtd`, `kvm` and `input` groups do not apply to
+the current session yet, so `/dev/sdb` still reads as permission denied until
+the user logs out and back in.
+
+## Next
+
+1. Log out and back in, then check `id -nG` for `disk`
 2. Format `sdb` as btrfs with label `data`, then create the `.snapshots`
    subvolume. Needs root for `mkfs`, after that the module mounts it at
    `/mnt/data` by label. Verify:
@@ -62,12 +73,13 @@ Ordered by what blocks what.
 
 ## Queued, not started
 
-10. Local AI models and tooling. Requirements are captured verbatim in
-    `ai-models.md`. Plan mode has to be turned on before this starts, the user
-    asked for that explicitly. Hardware budget: GTX 1050 Ti 4 GB VRAM, 32 GB
-    single-channel RAM, Ryzen 1400
-11. README updates. Only for things a reader cannot infer. Storage, the VM and
+10. README updates. Only for things a reader cannot infer. Storage, the VM and
     the laptop host are candidates, hotkey titles are not
+
+11. Local AI models and tooling. Requirements are captured verbatim in
+    `ai-models.md`. Plan mode has to be turned on before this starts, the user
+    asked for that explicitly. Kept last on purpose. Hardware budget:
+    GTX 1050 Ti 4 GB VRAM, 32 GB single-channel RAM, Ryzen 1400
 
 ## Notes
 
