@@ -105,6 +105,14 @@ Verified with `lsblk`, `lscpu`, `lspci`, `df`.
   - Yandex `https://webdav.yandex.ru`, GVFS mounts it as `davs://...`
 - Credentials stay out of Nix. The user runs `rclone config` and keeps the
   file out of the repo
+- Disk switching in yazi is by keymap, not a plugin. `g m` to `/mnt` as the hub
+  that shows every mounted disk at once, `g r` to `/mnt/data`, `g v` to
+  `/run/user/1000/gvfs` for WebDAV. `/mnt` only holds `data` right now, the
+  parent panel is not a disk list
+- yazi 26.9.1 already ships `g <Space>` as `cd --interactive` with path
+  completion, and the user has the `bookmarks` plugin on `m` and `'`. Both stay,
+  the new `g` keys sit in the subkeys that are free: `g m`, `g r`, `g v`, while
+  `g h/c/d/t/f` are yazi defaults and `g i/o/u//` were already taken
 - Moving 600 GB between Yandex and Mail.ru uses `rclone copy` between remotes.
   Data still passes through the local machine, there is no cross-provider
   server-side copy, but this avoids two FUSE mounts and gets retries, checks

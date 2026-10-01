@@ -74,6 +74,21 @@ let
               desc = "Search files by name (smart)";
             }
             {
+              on = [ "g" "m" ];
+              run = "cd /mnt";
+              desc = "Go to /mnt (mounted disks)";
+            }
+            {
+              on = [ "g" "r" ];
+              run = "cd /mnt/data";
+              desc = "Go to /mnt/data";
+            }
+            {
+              on = [ "g" "v" ];
+              run = "cd /run/user/1000/gvfs";
+              desc = "Go to GVFS mounts (WebDAV)";
+            }
+            {
               on = "p";
               run = "plugin smart-paste";
               desc = "Paste and handle conflicts";

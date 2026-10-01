@@ -230,3 +230,33 @@ to be compared, which needs the hardware plugged in.
 
 Added `alsa-utils` to `hw-audio.nix` so `aseqdump`, `amidi` and `aconnect` are
 available for the capture.
+
+## yazi
+
+Question was how to switch between disks quickly. Answered from the yazi 26.9.1
+docs plus the shipped `keymap-default.toml` pulled with `gh api`, rather than
+from memory, so the subkeys are real and not invented.
+
+Checked what is actually on disk first: `/mnt` holds only `data`,
+`/run/user/1000/gvfs` and `/run/media` do not exist yet since no gvfs mount or
+removable drive has happened. Worth recording because a binding to a
+nonexistent path just errors.
+
+Occupied `g` subkeys before the change: from yazi defaults `g g`, `g h`, `g c`,
+`g d`, `g t`, `g <Space>`, `g f`, and from our own prepend `g i` lazygit, `g o`
+and `g u` duckdb, `g /` yafg. That leaves `g m`, `g r`, `g v`, `g s` free.
+
+Added three, in the navigation block of `yazi.nix`:
+
+- `g m` `cd /mnt`, the hub where every mounted disk shows at once
+- `g r` `cd /mnt/data`
+- `g v` `cd /run/user/1000/gvfs` for WebDAV
+
+Kept `g <Space>` `cd --interactive` and the bookmarks plugin on `m` and `'`, both
+were already there and both handle removable media better than a fixed key,
+since the mountpoint name depends on the volume label.
+
+Verified past `nix flake check`, since that only evaluates the module and never
+serializes the TOML. Built the blob toplevel and grepped the resulting
+`keymap.toml` out of the store, all three entries are there with correct `on`,
+`run` and `desc`.

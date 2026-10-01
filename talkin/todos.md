@@ -14,11 +14,14 @@ Ordered by what blocks what.
 - [x] gnome-disk-utility and smartmontools
 - [x] `gcc16` committed separately for gopls, `99d48af`
 - [x] `hw-storage.nix` with btrfs `/mnt/data` and monthly snapshots, `152a4b7`
+- [x] Quick disk switching in yazi: `g m` `/mnt`, `g r` `/mnt/data`,
+      `g v` GVFS
 - [x] All of the above pushed to GitHub
 
 ## Rebuild
 
-Done, the user ran it and it applied cleanly. Verified afterwards:
+One rebuild has been applied. The user ran it and it applied cleanly. Verified
+afterwards:
 
 - `/run/current-system` is generation `id4m03pr...`, matching what the agent
   built before the switch
@@ -30,25 +33,28 @@ Done, the user ran it and it applied cleanly. Verified afterwards:
 - `libvirtd.socket` is active, `virsh --connect qemu:///system` answers with an
   empty domain list, so libvirt is usable
 
+A second rebuild is pending, nothing depends on it yet:
+- `a50dca1` snapshots as a subvolume, tmpfiles ownership
+- `71280b8` tmpfiles owner `egr:users`, the group `egr` does not exist
+- `47e8cf0` pruning via `ls -1` instead of `btrfs subvolume list`
+- the new yazi `g m` / `g r` / `g v` keys
+
+The active generation still carries the old unit script and the old tmpfiles
+rule. Ownership on disk was fixed by hand, so nothing is broken until the
+rebuild lands.
+
 Still open: the `disk`, `libvirtd`, `kvm` and `input` groups do not apply to
 the current session yet, so `/dev/sdb` still reads as permission denied until
 the user logs out and back in.
 
 ## Next
 
-1. sdb storage is done. Formatted, mounted, `.snapshots` subvolume created,
-   ownership set to `egr:users`, and the first snapshot `2026-10-01` exists with
-   the service exiting 0. Timer fires 2026-11-01 04:00.
-   `sdb` label `data`, UUID `de1505d1-9082-4a96-b373-19528ff443ba`, 54 G free
-2. Optional check, only out of curiosity: whether `sudo btrfs subvolume list
-   /mnt/data` works as root here. Not needed by anything, the pruning no longer
-   uses the tree search
-3. Set up rclone remotes. The user runs `rclone config` and enters their own
+1. Set up rclone remotes. The user runs `rclone config` and enters their own
    app passwords. Never into Nix. Remotes: `yandex` at
    `https://webdav.yandex.ru`, `mailru` at `https://webdav.cloud.mail.ru`
-4. Check WebDAV mounts from yazi, `davs://webdav.yandex.ru/` and
-   `davs://cloud.mail.ru/`
-5. MIDI. Plug the M-Vave in, compare USB-C against Bluetooth, and capture
+2. Check WebDAV mounts from yazi, `davs://webdav.yandex.ru/` and
+   `davs://cloud.mail.ru/`. `g v` jumps straight to the GVFS hub
+3. MIDI. Plug the M-Vave in, compare USB-C against Bluetooth, and capture
    events with `aseqdump -l` first to find the port, then
    `aseqdump -p <port>` while playing in openDAW. If NoteOff shows up in the
    capture the problem is in the app or the browser Web MIDI layer. If it never
@@ -56,27 +62,27 @@ the user logs out and back in.
 
 ## Blocked, needs hardware or a decision
 
-6. Windows VM. Blocked on a licensed ISO from the user and on the HP DeskJet
+4. Windows VM. Blocked on a licensed ISO from the user and on the HP DeskJet
    1510 VID/PID. Once the ISO is on disk, `virt-install` can do the rest:
    100 GB qcow2 on `sda2`, virtio, SPICE, UEFI. Needs the printer plugged in
    and `lsusb` output for passthrough
-7. Laptop. Blocked on the user generating the real hardware configuration on
+5. Laptop. Blocked on the user generating the real hardware configuration on
    the laptop itself, and ideally `lspci -nnk` for GPU bus ids
-8. Focus ring. Unanswered. Need to know whether the thin outline is seen in a
+6. Focus ring. Unanswered. Need to know whether the thin outline is seen in a
    normal window or only in the noctalia overview, and whether it is on the
    focused window or on every window
-9. `sdc` as backup target. 1.8 TB exFAT, unmounted. Needs a decision on whether
+7. `sdc` as backup target. 1.8 TB exFAT, unmounted. Needs a decision on whether
    to mount it by UUID in fstab or leave it manual
 
 ## Queued, not started
 
-10. README updates. Only for things a reader cannot infer. Storage, the VM and
-    the laptop host are candidates, hotkey titles are not
+8. README updates. Only for things a reader cannot infer. Storage, the VM and
+   the laptop host are candidates, hotkey titles are not
 
-11. Local AI models and tooling. Requirements are captured verbatim in
-    `ai-models.md`. Plan mode has to be turned on before this starts, the user
-    asked for that explicitly. Kept last on purpose. Hardware budget:
-    GTX 1050 Ti 4 GB VRAM, 32 GB single-channel RAM, Ryzen 1400
+9. Local AI models and tooling. Requirements are captured verbatim in
+   `ai-models.md`. Plan mode has to be turned on before this starts, the user
+   asked for that explicitly. Kept last on purpose. Hardware budget:
+   GTX 1050 Ti 4 GB VRAM, 32 GB single-channel RAM, Ryzen 1400
 
 ## Notes
 
