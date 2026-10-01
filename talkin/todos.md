@@ -36,22 +36,29 @@ the user logs out and back in.
 
 ## Next
 
-1. Log out and back in, then check `id -nG` for `disk`
-2. Format `sdb` as btrfs with label `data`, then create the `.snapshots`
-   subvolume. Needs root for `mkfs`, after that the module mounts it at
-   `/mnt/data` by label. Verify:
+1. Finish the sdb setup, one sudo command does all of it:
    ```
-   lsblk -f /dev/sdb
-   sudo systemctl start storage-snapshot.service
+   sudo systemctl start mnt-data.mount \
+     && sudo btrfs subvolume create /mnt/data/.snapshots \
+     && sudo chown egr:egr /mnt/data /mnt/data/.snapshots \
+     && sudo systemctl start storage-snapshot.service
+   ```
+   Then check:
+   ```
+   df -h /mnt/data
    btrfs subvolume list /mnt/data
-   systemctl list-timers storage-snapshot.timer
+   systemctl status storage-snapshot.service
+   ls /mnt/data/.snapshots
    ```
-3. Set up rclone remotes. The user runs `rclone config` and enters their own
+   `sdb` is already formatted, label `data`, UUID `de1505d1-9082-4a96-b373-19528ff443ba`.
+   What is left is mounting, the `.snapshots` subvolume and ownership, all of
+   which need root
+2. Set up rclone remotes. The user runs `rclone config` and enters their own
    app passwords. Never into Nix. Remotes: `yandex` at
    `https://webdav.yandex.ru`, `mailru` at `https://webdav.cloud.mail.ru`
-4. Check WebDAV mounts from yazi, `davs://webdav.yandex.ru/` and
+3. Check WebDAV mounts from yazi, `davs://webdav.yandex.ru/` and
    `davs://cloud.mail.ru/`
-5. MIDI. Plug the M-Vave in, compare USB-C against Bluetooth, and capture
+4. MIDI. Plug the M-Vave in, compare USB-C against Bluetooth, and capture
    events with `aseqdump -l` first to find the port, then
    `aseqdump -p <port>` while playing in openDAW. If NoteOff shows up in the
    capture the problem is in the app or the browser Web MIDI layer. If it never

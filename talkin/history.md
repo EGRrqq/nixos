@@ -134,6 +134,54 @@ User decisions taken:
   motion graphics projects
 - Explained and accepted that snapshots are not a backup, `sdc` is for copies
 
+## sdb, the correction
+
+An earlier check with `lsblk` showed no partitions and the agent reported the
+disk as having no partition table. That was wrong in the literal sense.
+`blkid -p` and `wipefs -n` show an empty GPT header on it, with the partition
+entry array at LBA 2 all zeros. No partitions were ever created and no
+filesystem of any kind exists. SMART would not pass through on this controller
+without root, so the drive history could not be confirmed, only the absence of
+anything stored. The user approved formatting after being told this.
+
+Formatted `sdb` with `mkfs.btrfs -f -L data`, UUID
+`de1505d1-9082-4a96-b373-19528ff443ba`. btrfs picked single data with DUP
+metadata, which is right for a 56 GB drive.
+
+Mounting and creating the subvolume need root, the agent only has the `disk`
+group through `sg disk` after the switch, which is enough to write the
+filesystem but not enough to mount it.
+
+## the snapshot bug, found before it bit
+
+The first version of `hw-storage.nix` did
+`btrfs subvolume snapshot -r /mnt/data /mnt/data/.snapshots/<date>` with
+`.snapshots` created by `mkdir -p`, so a plain directory. A plain directory
+inside the snapshotted subvolume means every new snapshot contains all the
+older snapshots, and on a 56 GB drive that fills up by itself within a few
+months.
+
+Fixed by making `.snapshots` a btrfs subvolume, since nested subvolumes are not
+copied into a snapshot of their parent. The service now refuses to run if it is
+missing, and prints the command to create it, rather than silently mkdir-ing it
+and bringing the growth problem back.
+
+Ownership of the mount point goes through a tmpfiles rule so the user does not
+need sudo to write there.
+
+The pruning logic was checked on realistic `btrfs subvolume list` output: with
+14 monthly snapshots it selects the two oldest for deletion and keeps 12. An
+earlier version of that test was wrong because `seq -w` does not pad to two
+digits when the largest number is single digit, the padding was faked with
+`printf %02d`.
+
+## what is left on the disk
+
+One sudo command for the user, then it is done:
+`systemctl start mnt-data.mount`, `btrfs subvolume create
+/mnt/data/.snapshots`, `chown egr:egr` on both, and `systemctl start
+storage-snapshot.service`.
+
 ## midi
 
 Researched the openDAW repo, 59 open issues, nothing matching stuck notes
