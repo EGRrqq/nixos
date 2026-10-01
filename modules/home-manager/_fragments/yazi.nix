@@ -18,6 +18,7 @@ let
       pkgs.ripdrag
       pkgs.duckdb
       pkgs.python314Packages.rich
+      (lib.getBin pkgs.glib) # gio, the gvfs plugin shells out to it
     ];
 
     plugins = {

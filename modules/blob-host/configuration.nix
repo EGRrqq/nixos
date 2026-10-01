@@ -48,6 +48,8 @@
         self.nixosModules.vscode
         self.nixosModules.udev
         self.nixosModules.containers
+        self.nixosModules.gvfs
+        self.nixosModules.libvirt
 
         inputs.home-manager.nixosModules.home-manager
       ];

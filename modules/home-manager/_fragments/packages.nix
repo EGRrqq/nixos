@@ -51,6 +51,10 @@ in
     zathura
     bitwarden-desktop
     localsend
+
+    # Cloud storage
+    rclone # WebDAV and other remotes, rclone copy between them
+    (lib.getBin glib) # gio, used by the yazi gvfs plugin
   ];
 
   xdg.desktopEntries = {
