@@ -36,27 +36,19 @@ the user logs out and back in.
 
 ## Next
 
-1. Finish the sdb setup. Formatted, mounted and the `.snapshots` subvolume is
-   created, only ownership and the first snapshot are left:
-   ```
-   sudo chown egr:users /mnt/data /mnt/data/.snapshots \
-     && sudo systemctl start storage-snapshot.service
-   ```
-   Note the group is `users`, there is no `egr` group. Then check in a normal
-   terminal, the agent cannot run btrfs subvolume listing:
-   ```
-   df -h /mnt/data
-   btrfs subvolume list /mnt/data
-   systemctl status storage-snapshot.service
-   ls /mnt/data/.snapshots
-   ```
+1. sdb storage is done. Formatted, mounted, `.snapshots` subvolume created,
+   ownership set to `egr:users`, and the first snapshot `2026-10-01` exists with
+   the service exiting 0. Timer fires 2026-11-01 04:00.
    `sdb` label `data`, UUID `de1505d1-9082-4a96-b373-19528ff443ba`, 54 G free
-2. Set up rclone remotes. The user runs `rclone config` and enters their own
+2. Optional check, only out of curiosity: whether `sudo btrfs subvolume list
+   /mnt/data` works as root here. Not needed by anything, the pruning no longer
+   uses the tree search
+3. Set up rclone remotes. The user runs `rclone config` and enters their own
    app passwords. Never into Nix. Remotes: `yandex` at
    `https://webdav.yandex.ru`, `mailru` at `https://webdav.cloud.mail.ru`
-3. Check WebDAV mounts from yazi, `davs://webdav.yandex.ru/` and
+4. Check WebDAV mounts from yazi, `davs://webdav.yandex.ru/` and
    `davs://cloud.mail.ru/`
-4. MIDI. Plug the M-Vave in, compare USB-C against Bluetooth, and capture
+5. MIDI. Plug the M-Vave in, compare USB-C against Bluetooth, and capture
    events with `aseqdump -l` first to find the port, then
    `aseqdump -p <port>` while playing in openDAW. If NoteOff shows up in the
    capture the problem is in the app or the browser Web MIDI layer. If it never

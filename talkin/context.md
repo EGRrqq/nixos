@@ -72,13 +72,14 @@ Verified with `lsblk`, `lscpu`, `lspci`, `df`.
   re-login. Before that, `/dev/sdb` reads fail with permission denied. As a
   stopgap `sg disk -c '...'` works, it looks the group up in `/etc/group`
   without needing a new login
-- `btrfs subvolume list`, `subvolume show` and `get-default` all fail with
-  `Could not search B-tree: Operation not permitted` inside the agent shell.
-  `btrfs filesystem show` works, and so does everything else. It is ioctl
-  filtering in this sandbox, not a problem with the filesystem. The same
-  commands run fine as root through systemd, which is where the snapshot
-  service actually runs. When subvolume state has to be checked, ask the user
-  to paste the output of the command in their own terminal
+- `btrfs subvolume list`, `subvolume show` and `get-default` fail with
+  `Could not search B-tree: Operation not permitted` for a normal user on this
+  box, root is required. `filesystem show`, `filesystem df`, `filesystem usage`
+  and `device show` work fine because they use other ioctls. Same class of
+  problem is tracked upstream at kdave/btrfs-progs#757. This is not the agent
+  sandbox, it reproduces in the user's own terminal. Do not build anything that
+  needs a btrfs tree search as a user. Listing subvolume directories by name is
+  the workaround that needs no privilege
 - There is no group named `egr`. The primary group is `users`, gid 100.
   `/etc/passwd` shows `egr` in the group name field but nothing resolves it, so
   always use `user:users` in chown and tmpfiles rules

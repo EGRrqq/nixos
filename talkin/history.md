@@ -196,14 +196,28 @@ sudo chown egr:users /mnt/data /mnt/data/.snapshots && sudo systemctl start stor
 ## the agent cannot inspect btrfs subvolumes
 
 `btrfs subvolume list`, `subvolume show` and `get-default` return
-`Could not search B-tree: Operation not permitted` in the agent shell, while
-`btrfs filesystem show` and `mkfs` work. `filesystem show` uses a different
-ioctl, so this is ioctl filtering in the sandbox rather than anything wrong
-with the disk. Noted in `context.md` so later sessions ask the user to run
-those commands instead of guessing.
+`Could not search B-tree: Operation not permitted` for a normal user on this
+machine. It reproduces in the user's own terminal, so the first guess that this
+was ioctl filtering inside the agent sandbox was wrong. `filesystem show`,
+`filesystem df`, `filesystem usage` and `device show` all work, because they go
+through different ioctls. Same class of bug is tracked upstream at
+kdave/btrfs-progs#757, opened in 2024, still open.
 
-Confirmed the snapshot script runs with `set -e` but no `pipefail`, so an empty
-grep inside the pruning pipeline will not abort it.
+The guess that mattered more: the snapshot service ran
+`btrfs subvolume list` inside a pipeline, and a pipeline without `pipefail`
+reports only the status of the last command. So the pruning was failing
+silently and the service still exited 0. The successful run the user reported
+proved the snapshot was created but said nothing about pruning.
+
+Fixed in `47e8cf0` by taking the names from `ls -1 /mnt/data/.snapshots`
+instead, since snapshot subvolumes are plain directories. That needs no
+privilege at all. The listing is assigned on its own rather than piped, so a
+failure stops the service instead of vanishing.
+
+Pruning verified against real directory names: 14 names leaves the two oldest
+selected, 15 leaves three, 12 and an empty directory select nothing.
+
+Confirmed the script runs with `set -e` and no `pipefail`.
 
 ## midi
 
