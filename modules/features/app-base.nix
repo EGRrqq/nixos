@@ -35,6 +35,10 @@
       sshs
       wl-clipboard
 
+      # Disks
+      gnome-disks
+      smartmontools
+
       python314
       python314Packages.pip
       python314Packages.jupyterlab
