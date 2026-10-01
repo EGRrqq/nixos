@@ -36,7 +36,7 @@
       wl-clipboard
 
       # Disks
-      gnome-disks
+      gnome-disk-utility
       smartmontools
 
       python314
