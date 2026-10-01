@@ -182,6 +182,29 @@ One sudo command for the user, then it is done:
 /mnt/data/.snapshots`, `chown egr:egr` on both, and `systemctl start
 storage-snapshot.service`.
 
+The user ran it. Mount and subvolume creation succeeded, `chown` failed with
+`invalid group: egr:egr`, which broke the `&&` chain so the snapshot service
+never ran. There is no `egr` group, the primary group is `users` with gid 100.
+The tmpfiles rule in `hw-storage.nix` had the same mistake and would have
+failed on every boot, fixed in `71280b8` to `egr users`.
+
+Corrected command for the user:
+```
+sudo chown egr:users /mnt/data /mnt/data/.snapshots && sudo systemctl start storage-snapshot.service
+```
+
+## the agent cannot inspect btrfs subvolumes
+
+`btrfs subvolume list`, `subvolume show` and `get-default` return
+`Could not search B-tree: Operation not permitted` in the agent shell, while
+`btrfs filesystem show` and `mkfs` work. `filesystem show` uses a different
+ioctl, so this is ioctl filtering in the sandbox rather than anything wrong
+with the disk. Noted in `context.md` so later sessions ask the user to run
+those commands instead of guessing.
+
+Confirmed the snapshot script runs with `set -e` but no `pipefail`, so an empty
+grep inside the pruning pipeline will not abort it.
+
 ## midi
 
 Researched the openDAW repo, 59 open issues, nothing matching stuck notes

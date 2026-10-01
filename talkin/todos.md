@@ -36,23 +36,21 @@ the user logs out and back in.
 
 ## Next
 
-1. Finish the sdb setup, one sudo command does all of it:
+1. Finish the sdb setup. Formatted, mounted and the `.snapshots` subvolume is
+   created, only ownership and the first snapshot are left:
    ```
-   sudo systemctl start mnt-data.mount \
-     && sudo btrfs subvolume create /mnt/data/.snapshots \
-     && sudo chown egr:egr /mnt/data /mnt/data/.snapshots \
+   sudo chown egr:users /mnt/data /mnt/data/.snapshots \
      && sudo systemctl start storage-snapshot.service
    ```
-   Then check:
+   Note the group is `users`, there is no `egr` group. Then check in a normal
+   terminal, the agent cannot run btrfs subvolume listing:
    ```
    df -h /mnt/data
    btrfs subvolume list /mnt/data
    systemctl status storage-snapshot.service
    ls /mnt/data/.snapshots
    ```
-   `sdb` is already formatted, label `data`, UUID `de1505d1-9082-4a96-b373-19528ff443ba`.
-   What is left is mounting, the `.snapshots` subvolume and ownership, all of
-   which need root
+   `sdb` label `data`, UUID `de1505d1-9082-4a96-b373-19528ff443ba`, 54 G free
 2. Set up rclone remotes. The user runs `rclone config` and enters their own
    app passwords. Never into Nix. Remotes: `yandex` at
    `https://webdav.yandex.ru`, `mailru` at `https://webdav.cloud.mail.ru`

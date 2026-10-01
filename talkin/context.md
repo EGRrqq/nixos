@@ -69,10 +69,24 @@ Verified with `lsblk`, `lscpu`, `lspci`, `df`.
 - SSH has no usable key. Push over HTTPS with the `gh` credential helper:
   `git push https://github.com/OWNER/REPO.git HEAD:main`
 - Disk access needs the `disk` group, which only lands after a rebuild and
-  re-login. Before that, `/dev/sdb` reads fail with permission denied
+  re-login. Before that, `/dev/sdb` reads fail with permission denied. As a
+  stopgap `sg disk -c '...'` works, it looks the group up in `/etc/group`
+  without needing a new login
+- `btrfs subvolume list`, `subvolume show` and `get-default` all fail with
+  `Could not search B-tree: Operation not permitted` inside the agent shell.
+  `btrfs filesystem show` works, and so does everything else. It is ioctl
+  filtering in this sandbox, not a problem with the filesystem. The same
+  commands run fine as root through systemd, which is where the snapshot
+  service actually runs. When subvolume state has to be checked, ask the user
+  to paste the output of the command in their own terminal
+- There is no group named `egr`. The primary group is `users`, gid 100.
+  `/etc/passwd` shows `egr` in the group name field but nothing resolves it, so
+  always use `user:users` in chown and tmpfiles rules
 - Untracked files are invisible to `git+file`, so new modules have to be
   `git add`ed before `nix flake check` will see them. Evaluate with
   `path:/home/egr/.config/nixos` while experimenting
+- `seq -w` does not zero-pad when the largest number is single digit, fake it
+  with `printf %02d` when testing date logic
 
 ## Decisions and their reasons
 
