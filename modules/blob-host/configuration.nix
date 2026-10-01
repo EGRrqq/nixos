@@ -30,6 +30,7 @@
         self.nixosModules.printing
         self.nixosModules.tablet
         self.nixosModules.fonts
+        self.nixosModules.storage
 
         # Desktop
         self.nixosModules.displayManager
