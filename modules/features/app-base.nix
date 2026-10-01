@@ -43,6 +43,7 @@
       python314Packages.pip
       python314Packages.jupyterlab
 
+      gcc16
       llvmPackages_23.clangNoLibcxx # the compiler (uses libstdc++ to match GCC)
       llvmPackages_23.clang-tools
       cpplint
