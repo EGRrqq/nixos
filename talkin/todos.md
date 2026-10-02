@@ -20,28 +20,15 @@ Ordered by what blocks what.
 
 ## Rebuild
 
-One rebuild has been applied. The user ran it and it applied cleanly. Verified
-afterwards:
+Both rebuilds are applied. Second one, generation `clc2dg0v...`, was verified:
 
-- `/run/current-system` is generation `id4m03pr...`, matching what the agent
-  built before the switch
-- `gnome-disks`, `smartctl`, `aseqdump`, `rclone`, `gio`, `virsh`,
-  `virt-manager` all resolve now
-- `/etc/fstab` has `/dev/disk/by-label/data /mnt/data btrfs
-  compress=zstd,noatime,nofail 0 0`, and `mnt-data.mount` is generated
-- `storage-snapshot.timer` is scheduled, next run 2026-11-01 04:00
-- `libvirtd.socket` is active, `virsh --connect qemu:///system` answers with an
-  empty domain list, so libvirt is usable
-
-A second rebuild is pending, nothing depends on it yet:
-- `a50dca1` snapshots as a subvolume, tmpfiles ownership
-- `71280b8` tmpfiles owner `egr:users`, the group `egr` does not exist
-- `47e8cf0` pruning via `ls -1` instead of `btrfs subvolume list`
-- the new yazi `g m` / `g r` / `g v` keys
-
-The active generation still carries the old unit script and the old tmpfiles
-rule. Ownership on disk was fixed by hand, so nothing is broken until the
-rebuild lands.
+- the three yazi keys `g m`, `g r`, `g v` are in the live
+  `YAZI_CONFIG_HOME/keymap.toml` inside the new generation
+- `storage-snapshot.service` now runs `names=$(ls -1 /mnt/data/.snapshots)`
+  instead of walking the btrfs tree, so the permission bug is gone
+- `/etc/tmpfiles.d/00-nixos.conf` has `d /mnt/data 0755 egr users - -`, the
+  group `egr` never existed so the old rule was silently wrong
+- `mnt-data.mount` and `storage-snapshot.timer` both active
 
 Still open: the `disk`, `libvirtd`, `kvm` and `input` groups do not apply to
 the current session yet, so `/dev/sdb` still reads as permission denied until
@@ -49,11 +36,10 @@ the user logs out and back in.
 
 ## Next
 
-1. Set up rclone remotes with the native backends, `type = mailru` and
-   `type = yandex`. The user runs `rclone config` and enters their own
-   credentials, never into Nix. Mail.ru needs an app password at the level
-   "Full access to Mail, Cloud and Calendar", Cloud alone does not work.
-   Yandex uses OAuth in a browser, no app password
+1. Finish the Mail.ru remote. `yandex` is done and verified. `mailru` still
+   fails with `oauth2: "invalid username or password"`. Root cause is the app
+   password scope, not the config. See the `rclone` section in `history.md`
+   for the length arithmetic and the forum thread
 2. Verify with `rclone about mailru:`, `rclone about yandex:` and
    `rclone lsd mailru:`
 3. Migrate Mail.ru to Yandex, about 600 GB, one way, because the Mail.ru
@@ -71,27 +57,27 @@ the user logs out and back in.
 
 ## Blocked, needs hardware or a decision
 
-5. Windows VM. Blocked on a licensed ISO from the user and on the HP DeskJet
+6. Windows VM. Blocked on a licensed ISO from the user and on the HP DeskJet
    1510 VID/PID. Once the ISO is on disk, `virt-install` can do the rest:
    100 GB qcow2 on `sda2`, virtio, SPICE, UEFI. Needs the printer plugged in
    and `lsusb` output for passthrough
-6. Laptop. Blocked on the user generating the real hardware configuration on
+7. Laptop. Blocked on the user generating the real hardware configuration on
    the laptop itself, and ideally `lspci -nnk` for GPU bus ids
-7. Focus ring. Unanswered. Need to know whether the thin outline is seen in a
+8. Focus ring. Unanswered. Need to know whether the thin outline is seen in a
    normal window or only in the noctalia overview, and whether it is on the
    focused window or on every window
-8. `sdc` as backup target. 1.8 TB exFAT, unmounted. Needs a decision on whether
+9. `sdc` as backup target. 1.8 TB exFAT, unmounted. Needs a decision on whether
    to mount it by UUID in fstab or leave it manual
 
 ## Queued, not started
 
-9. README updates. Only for things a reader cannot infer. Storage, the VM and
-   the laptop host are candidates, hotkey titles are not
+10. README updates. Only for things a reader cannot infer. Storage, the VM and
+    the laptop host are candidates, hotkey titles are not
 
-10. Local AI models and tooling. Requirements are captured verbatim in
-   `ai-models.md`. Plan mode has to be turned on before this starts, the user
-   asked for that explicitly. Kept last on purpose. Hardware budget:
-   GTX 1050 Ti 4 GB VRAM, 32 GB single-channel RAM, Ryzen 1400
+11. Local AI models and tooling. Requirements are captured verbatim in
+    `ai-models.md`. Plan mode has to be turned on before this starts, the user
+    asked for that explicitly. Kept last on purpose. Hardware budget:
+    GTX 1050 Ti 4 GB VRAM, 32 GB single-channel RAM, Ryzen 1400
 
 ## Notes
 
