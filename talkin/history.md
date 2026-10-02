@@ -290,3 +290,47 @@ one way from Mail.ru to Yandex.
 Nothing about GVFS changes. gvfs speaks WebDAV regardless of which backend
 rclone uses, so `davs://webdav.yandex.ru/` and `davs://cloud.mail.ru/` stay
 valid for yazi. Kept those two concerns separate in the notes.
+
+Tracked the Mail.ru auth failure to the app password, not to the config
+structure. Three things came out of it worth keeping.
+
+The length of `pass` in `rclone.conf` leaks the length of the plaintext.
+`rclone obscure` is deterministic in size, it is base64 of the plaintext plus a
+fixed 16 byte nonce with the padding stripped. Measured by feeding rclone its
+own inputs:
+
+    4 chars -> 27     8 chars -> 32    16 chars -> 43
+    5 chars -> 28    16 chars -> 43    20 chars -> 48
+    6 chars -> 30    24 chars -> 54
+
+The config started at 28, so the first attempt entered a 5 character string
+where a 16 character app password belongs. After the user redid it the value
+was 48, a 20 character input, and still rejected. `awk -F' = ' '/^pass/'`
+measures the length without revealing anything, which makes this a safe
+diagnostic.
+
+I was wrong that `client_id` and `client_secret` can be skipped by answering
+`n` to "Edit advanced config?". They are standard options, injected for every
+OAuth backend by `lib/oauthutil`, so the prompt always shows up before that
+question. Leave them blank with Enter, which is what the docs say to do.
+
+`client_id` is not a slot for a login or an app key. In `mailru.go` the
+`Options` struct has no ClientID field at all, and the OAuth client is a
+constant:
+
+    // backend/mailru/api/m1.go
+    OAuthURL      = "https://o2.mail.ru/token"
+    OAuthClientID = "cloud-win"
+
+rclone is retiring its shared client_ids during 2026, and `oauthutil` warns
+about that, but mailru does not call `SharedClientIDWarning`. It uses its own
+`cloud-win` constant, so blank fields are correct here and stay correct.
+
+The actual fix for `oauth2: "invalid username or password"` came from forum
+thread 49298, the one the rclone docs link to. The app password needs the
+permission scope "Полный доступ к Почте, Облаку, Календарю (Все протоколы)".
+Two specifics that the docs do not spell out: the WebDAV-only scope produces
+this exact error, and the person who got it working noted that among the
+similar-looking entries in the dropdown you have to pick the last one, not the
+first. Worth telling the user exactly, since the first and last entries look
+alike.
